@@ -43,10 +43,10 @@ This section calculates the total requests that each service types obtained by t
 #| output: true
 
 # Count instances of each service type requests by quarter
-qtrly_request_counts <- dplyr::count(cleaned_df, Service.Request.Type, Quarter, sort = TRUE)
+qtrly_request_counts <- dplyr::count(cleaned_df, `Service Request Type`, Quarter, sort = TRUE)
 
 # Get plot of the instances per quarter
-qtrly_req_ct_ggplot <- ggplot(data = qtrly_request_counts, aes(x = Service.Request.Type, y = n, fill = Quarter)) + 
+qtrly_req_ct_ggplot <- ggplot(data = qtrly_request_counts, aes(x = `Service Request Type`, y = n, fill = Quarter)) + 
   geom_bar(stat = "identity") +
   labs(
     title = "Quarterly Count of Service Request Types",
@@ -61,16 +61,16 @@ qtrly_req_ct_ggplot <- ggplot(data = qtrly_request_counts, aes(x = Service.Reque
 # GET TOP 10 FOR BETTER ANALYSIS
 
 # Count instances of each service type, then sort and get the highest 10 service types
-top_10_service_ct <- dplyr::count(cleaned_df, Service.Request.Type, sort = TRUE) %>%
+top_10_service_ct <- dplyr::count(cleaned_df, `Service Request Type`, sort = TRUE) %>%
   dplyr::slice_max(n, n = 10)
 
 # Filter to the top 10 service types, then count instances of service type per quarter
 top_10_qtrly_req_ct <- cleaned_df %>%
-  dplyr::filter(Service.Request.Type %in% top_10_service_ct$Service.Request.Type) %>%
-  dplyr::count(Service.Request.Type, Quarter)
+  dplyr::filter(`Service Request Type` %in% top_10_service_ct$`Service Request Type`) %>%
+  dplyr::count(`Service Request Type`, Quarter)
 
 # Plot in descending order
-top_10_req_ct_ggplot <- ggplot(data = top_10_qtrly_req_ct, aes(x = reorder(Service.Request.Type, -n), y = n, fill = Quarter)) +  
+top_10_req_ct_ggplot <- ggplot(data = top_10_qtrly_req_ct, aes(x = reorder(`Service Request Type`, -n), y = n, fill = Quarter)) +  
   geom_bar(stat = "identity") +
   labs(
     title = "Count of Top 10 Service Request Types per Quarter",
