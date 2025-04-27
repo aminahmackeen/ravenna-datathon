@@ -36,4 +36,4 @@ cleaned_df$DayOfWeek <- weekdays(timestamp_dt)
 cleaned_df$Time <-format(timestamp_dt, "%p")
 
 # Export to CSV
-write.csv(merged_df, "Cleaned_Customer_Service.csv")
+write.csv(cleaned_df, "Cleaned_Customer_Service.csv")
