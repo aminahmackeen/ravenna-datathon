@@ -1,0 +1,55 @@
+---
+title: "Datathon Final Submission"
+author: "Suk Jin Chung, Maisara Mackeen"
+format: 
+  html:
+    embed-resources: true
+editor: visual
+runtime: shiny
+---
+
+## Data Visualization
+
+```{r}
+#| echo: false
+library(ggplot2)
+library(dplyr)
+library(shiny)
+library(readr)
+library(scales)
+
+cleaned_df <- read_csv("Cleaned_Customer_Service.csv")
+```
+
+```{r}
+#| echo: false
+#| input: true
+selectInput(
+  inputId = "time_unit",
+  label = "Select Time Unit:",
+  choices = c("Month", "Quarter", "DayOfWeek", "Time", "Year"),
+  selected = "Month"
+)
+
+```
+
+```{r}
+#| echo: false
+#| output: true
+renderPlot({
+  grouped_data <- cleaned_df %>%
+    group_by(.data[[input$time_unit]]) %>%
+    summarise(`Number of Requests` = n(), .groups = "drop") %>%
+    arrange(.data[[input$time_unit]])
+
+  ggplot(grouped_data, aes(x = .data[[input$time_unit]], y = `Number of Requests`)) +
+    geom_bar(stat = "identity", fill = "blue") +
+    scale_y_continuous(labels = comma) +
+    labs(
+      title = paste("Customer Requests by", input$time_unit),
+      x = input$time_unit,
+      y = "Number of Requests"
+    )
+})
+
+```
