@@ -34,3 +34,6 @@ cleaned_df$DayOfWeek <- weekdays(timestamp_dt)
 
 # Extract AM/PM to create new columns 
 cleaned_df$Time <-format(timestamp_dt, "%p")
+
+# Export to CSV
+write.csv(merged_df, "Cleaned_Customer_Service.csv")
