@@ -28,6 +28,7 @@ By examining these trends, we can better understand when demand for services is 
 
 ```{r}
 #| echo: false
+
 library(ggplot2)
 library(dplyr)
 library(shiny)
@@ -70,7 +71,31 @@ renderPlot({
 
 ```
 
+```{r}
+#| echo: false
+#| output: true
+renderUI({
+  analysis_text <- switch(input$time_unit,
+  "Month" = "Monthly trends reveal seasonal fluctuations in service demand. Identifying peak months helps departments anticipate and allocate resources proactively. Based on the bar chart above, <b>March</b> has the highest number of service requests.",
+  
+  "Quarter" = "Grouping requests by quarter highlights business and operational cycles, supporting better alignment with fiscal planning and seasonal trends. Based on the bar chart above, the <b>first quarter</b> (January to March) has the highest number of service requests.",
+  
+  "DayOfWeek" = "Viewing requests by day of the week shows whether demand is concentrated on weekdays or weekends, informing staffing and scheduling needs. Based on the bar chart above, <b>weekdays</b> receive the highest number of service requests.",
+  
+  "Time" = "Breaking down requests into AM and PM periods reveals daily behavioral patterns, helping optimize shift planning and response times. Based on the bar chart above, more service requests are made during the <b>evening</b> hours.",
+  
+  "Year" = "Analyzing requests across multiple years highlights long-term growth trends and major disruptions in service demand. Based on the bar chart above, service requests have steadily increased over the years, and we anticipate <b>2025</b> to experience even <b>higher</b> demand."
+)
+
+  
+  HTML(paste0("<p><b>Analysis:</b> ", analysis_text, "</p>"))
+})
+
+```
+
 ## Part 2: Department with the Highest Number of Service Requests
+
+This section identifies which city departments received the highest number of service requests. We summarized the total requests by department and visualized the results in a bar chart. The chart highlights which departments handle the greatest volume of requests, helping to reveal patterns in public service demand across the city.
 
 ```{r}
 #| echo: false
@@ -92,5 +117,104 @@ ggplot(department_counts, aes(y = reorder(`City Department`, -`Number of Request
     x = "Number of Requests",
     y = "City Department"
   ) 
+
+```
+
+As seen in the bar chart above, SPD-Seattle Police Department has the highest number of service requests, which has a total of 256451 requests. This significant volume suggests that public safety concerns dominate service needs across the city.
+
+To better understand the nature of these requests, we can further break down the types of issues reported to SPD.
+
+```{r}
+#| echo: false
+
+# Filter for only SPD requests
+spd_requests <- cleaned_df %>%
+  filter(`City Department` == "SPD-Seattle Police Department")
+
+# Count the types of requests
+spd_request_types <- spd_requests %>%
+  count(`Service Request Type`) %>%
+  rename(`Number of Requests` = n) %>%
+  arrange(desc(`Number of Requests`))
+
+# View the top 3 types of service requests
+top_spd_requests <- spd_request_types %>%
+  slice_max(`Number of Requests`, n = 3)
+
+# Plot the top 3 service request types for SPD
+ggplot(top_spd_requests, aes(x = `Number of Requests`, 
+                             y = reorder(`Service Request Type`, `Number of Requests`))) +
+  geom_bar(stat = "identity", fill = "blue") +
+  scale_x_continuous(labels = comma) +
+  labs(
+    title = "Top 3 Service Request Types for SPD",
+    x = "Number of Requests",
+    y = "Service Request Type"
+  ) +
+  theme_minimal()
+
+```
+
+A closer breakdown of SPD requests shows that the two most common service types are:
+
+-   **Parking Enforcement Requests** (ranked #1)
+
+-   **Abandoned Vehicle/72-Hour Parking Ordinance Violations** (ranked #2)
+
+These findings suggest that a large portion of public demand on SPD is related to **parking issues** rather than emergency or violent crime concerns.
+
+Given this trend, **prioritization efforts** could include:
+
+-   Strengthening **dedicated parking enforcement teams** to manage non-emergency parking complaints separately from police units.
+
+-   **Public education campaigns** to clarify parking rules, aiming to reduce violations.
+
+-   **Exploring technology solutions** (such as app-based parking violation reporting) to streamline response times.
+
+Shifting non-emergency parking enforcement away from core police operations could improve SPD's capacity to focus on critical safety and crime prevention activities, while still addressing community concerns around parking and abandoned vehicles.
+
+## Part 3: Total Request by Different Service Types
+
+This section calculates the total requests that each service types obtained by the City of Seattle from the beginning of 2021 to 2025.
+
+```{r}
+#| echo: false
+
+# Count instances of each service type requests by quarter
+qtrly_request_counts <- count(cleaned_df, `Service Request Type`, Quarter, sort = TRUE)
+
+# Get plot of the instances per quarter
+ggplot(data = qtrly_request_counts, aes(x = `Service Request Type`, y = n, fill = Quarter)) + 
+  geom_bar(stat = "identity") +
+  labs(
+    title = "Quarterly Count of Service Request Types",
+    x = "Service Request Types", 
+    y = "Count of Service Request Types", color = "Quarter"
+    ) + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+```{r}
+#| echo: false
+# GET TOP 10 FOR BETTER ANALYSIS
+
+# Count instances of each service type, then sort and get the highest 10 service types
+top_10_service_ct <- count(cleaned_df, `Service Request Type`, sort = TRUE) %>%
+  slice_max(n, n = 10)
+
+# Filter to the top 10 service types, then count instances of service type per quarter
+top_10_qtrly_req_ct <- cleaned_df %>%
+  filter(`Service Request Type` %in% top_10_service_ct$`Service Request Type`) %>%
+  count(`Service Request Type`, Quarter)
+
+# Plot in descending order
+ggplot(data = top_10_qtrly_req_ct, aes(x = reorder(`Service Request Type`, -n), y = n, fill = Quarter)) +  
+  geom_bar(stat = "identity") +
+  labs(
+    title = "Count of Top 10 Service Request Types per Quarter",
+    x = "Service Request Types", 
+    y = "Count of Service Request Types", 
+    color = "Quarter") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
