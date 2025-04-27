@@ -8,7 +8,23 @@ editor: visual
 runtime: shiny
 ---
 
-## Data Visualization
+# Data Visualization
+
+## Part 1: Visualizing Customer Requests Over Time
+
+We analyze customer service requests across different time periods to uncover patterns in activity:
+
+-   **Month:** Identifies seasonal trends and highlights months with higher or lower request volumes.
+
+-   **Quarter:** Groups requests into broader periods, revealing business or operational cycles.
+
+-   **Day of Week:** Shows whether requests are more frequent on weekdays or weekends.
+
+-   **Time (AM/PM):** Differentiates customer behavior between morning and afternoon/evening hours.
+
+-   **Year:** Observes changes and growth in customer requests across different years.
+
+By examining these trends, we can better understand when demand for services is highest and identify potential areas for resource planning or operational improvements.
 
 ```{r}
 #| echo: false
@@ -18,7 +34,7 @@ library(shiny)
 library(readr)
 library(scales)
 
-cleaned_df <- read_csv("Cleaned_Customer_Service.csv")
+cleaned_df <- read_csv("Cleaned_Customer_Service.csv", show_col_types = FALSE)
 ```
 
 ```{r}
@@ -51,5 +67,30 @@ renderPlot({
       y = "Number of Requests"
     )
 })
+
+```
+
+## Part 2: Department with the Highest Number of Service Requests
+
+```{r}
+#| echo: false
+
+#calculate number of requests for each department
+department_counts <- cleaned_df %>%
+  count(.data[["City Department"]]) %>%
+  rename(`Number of Requests` = n) %>%
+  arrange(desc(`Number of Requests`))
+
+#plot graph for department_counts
+ggplot(department_counts, aes(y = reorder(`City Department`, -`Number of Requests`), 
+                              x = `Number of Requests`)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  #geom_text(aes(label = `Number of Requests`), vjust = -0.5, size = 3) + 
+  scale_x_continuous(labels = comma) +
+  labs(
+    title = "Number of Service Requests by Department",
+    x = "Number of Requests",
+    y = "City Department"
+  ) 
 
 ```
