@@ -4,11 +4,26 @@ author: "Suk Jin Chung, Maisara Mackeen"
 format: 
   html:
     embed-resources: true
+    self-contained: true
 editor: visual
 runtime: shiny
 ---
 
 # Data Visualization
+
+For this project, we chose the goverment prompt: **Analyzing the Seattle Resident's Customer Requests**
+
+To better understand service demand patterns, we conducted a data visualization analysis of customer requests submitted by Seattle residents. By examining trends across different time periods and service categories, we identified key insights to support resource planning and operational improvements.
+
+Our analysis is organized into three parts:
+
+-   **Part 1:** Visualizing Customer Requests Over Time
+
+-   **Part 2:** Identifying the Department with the Highest Number of Service Requests
+
+-   **Part 3:** Analyzing Total Requests by Different Service Types
+
+The data was sourced from [Seattle's Open Data Portal](https://data.seattle.gov/City-Administration/Customer-Service-Requests/5ngg-rpne/about_data).
 
 ## Part 1: Visualizing Customer Requests Over Time
 
@@ -35,6 +50,7 @@ library(shiny)
 library(readr)
 library(scales)
 
+#| echo: false
 cleaned_df <- read_csv("Cleaned_Customer_Service.csv", show_col_types = FALSE)
 ```
 
@@ -58,9 +74,16 @@ renderPlot({
     group_by(.data[[input$time_unit]]) %>%
     summarise(`Number of Requests` = n(), .groups = "drop") %>%
     arrange(.data[[input$time_unit]])
+  
+# If time unit is DayOfWeek, reorder manually
+  if (input$time_unit == "DayOfWeek") {
+    grouped_data[[input$time_unit]] <- factor(grouped_data[[input$time_unit]],
+      levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+    )
+  }
 
   ggplot(grouped_data, aes(x = .data[[input$time_unit]], y = `Number of Requests`)) +
-    geom_bar(stat = "identity", fill = "blue") +
+    geom_bar(stat = "identity", fill = "darkblue") +
     scale_y_continuous(labels = comma) +
     labs(
       title = paste("Customer Requests by", input$time_unit),
@@ -76,15 +99,15 @@ renderPlot({
 #| output: true
 renderUI({
   analysis_text <- switch(input$time_unit,
-  "Month" = "Monthly trends reveal seasonal fluctuations in service demand. Identifying peak months helps departments anticipate and allocate resources proactively. Based on the bar chart above, <b>March</b> has the highest number of service requests.",
+  "Month" = "Monthly trends reveal seasonal fluctuations in service demand. Identifying peak months helps departments anticipate and allocate resources proactively. Based on the bar chart above, <b>March</b> has the highest number of customer requests.",
   
-  "Quarter" = "Grouping requests by quarter highlights business and operational cycles, supporting better alignment with fiscal planning and seasonal trends. Based on the bar chart above, the <b>first quarter</b> (January to March) has the highest number of service requests.",
+  "Quarter" = "Grouping requests by quarter highlights business and operational cycles, supporting better alignment with fiscal planning and seasonal trends. Based on the bar chart above, the <b>first quarter</b> (January to March) has the highest number of customer requests.",
   
-  "DayOfWeek" = "Viewing requests by day of the week shows whether demand is concentrated on weekdays or weekends, informing staffing and scheduling needs. Based on the bar chart above, <b>weekdays</b> receive the highest number of service requests.",
+  "DayOfWeek" = "Viewing requests by day of the week shows whether demand is concentrated on weekdays or weekends, informing staffing and scheduling needs. Based on the bar chart above, <b>weekdays</b> receive the highest number of customer requests, with demand peaking on Monday and Tuesday and gradually declining as the week progresses.",
   
-  "Time" = "Breaking down requests into AM and PM periods reveals daily behavioral patterns, helping optimize shift planning and response times. Based on the bar chart above, more service requests are made during the <b>evening</b> hours.",
+  "Time" = "Breaking down requests into AM and PM periods reveals daily behavioral patterns, helping optimize shift planning and response times. Based on the bar chart above, more customer requests are made during the <b>afternoon/evening</b> hours.",
   
-  "Year" = "Analyzing requests across multiple years highlights long-term growth trends and major disruptions in service demand. Based on the bar chart above, service requests have steadily increased over the years, and we anticipate <b>2025</b> to experience even <b>higher</b> demand."
+  "Year" = "Analyzing requests across multiple years highlights long-term growth trends and major disruptions in service demand. Based on the bar chart above, customer requests have <b>steadily increased over the years</b>. Since we're just in April 2025 right now, we can anticipate that <b>2025</b> to experience even <b>higher</b> demand given this trend."
 )
 
   
@@ -109,7 +132,7 @@ department_counts <- cleaned_df %>%
 #plot graph for department_counts
 ggplot(department_counts, aes(y = reorder(`City Department`, -`Number of Requests`), 
                               x = `Number of Requests`)) +
-  geom_bar(stat = "identity", fill = "blue") +
+  geom_bar(stat = "identity", fill = "darkblue") +
   #geom_text(aes(label = `Number of Requests`), vjust = -0.5, size = 3) + 
   scale_x_continuous(labels = comma) +
   labs(
@@ -144,7 +167,7 @@ top_spd_requests <- spd_request_types %>%
 # Plot the top 3 service request types for SPD
 ggplot(top_spd_requests, aes(x = `Number of Requests`, 
                              y = reorder(`Service Request Type`, `Number of Requests`))) +
-  geom_bar(stat = "identity", fill = "blue") +
+  geom_bar(stat = "identity", fill = "darkblue") +
   scale_x_continuous(labels = comma) +
   labs(
     title = "Top 3 Service Request Types for SPD",
@@ -175,7 +198,7 @@ Shifting non-emergency parking enforcement away from core police operations coul
 
 ## Part 3: Total Request by Different Service Types
 
-This section calculates the total requests that each service types obtained by the City of Seattle from the beginning of 2021 to 2025.
+This section calculates the total requests that each service types obtained by the City of Seattle per quarter from the beginning of 2021 to 2025.
 
 ```{r}
 #| echo: false
@@ -193,6 +216,10 @@ ggplot(data = qtrly_request_counts, aes(x = `Service Request Type`, y = n, fill 
     ) + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
+
+Since there are a lot of service request types, the types are not that legible. The bar chart showing the counts of each type cannot be determined clearly – only the types with massive amounts of requests could be seen. Trends for each type could not be determined for certain due to the large number of data.
+
+Therefore, we will get the top 10 service request type counts before doing a trend analysis for better graph legibility.
 
 ```{r}
 #| echo: false
@@ -218,3 +245,27 @@ ggplot(data = top_10_qtrly_req_ct, aes(x = reorder(`Service Request Type`, -n), 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
+
+From the graph, **the top 10 service types**, in order, are:
+
+1.  Abandoned Vehicle/72 hour Parking Ordinance
+
+2.  Parking Enforcement
+
+3.  Unauthorized Encampment
+
+4.  Illegal Dumping / Needles
+
+5.  Graffiti
+
+6.  General Inquiry - Customer Service Bureau
+
+7.  Pothole
+
+8.  General Inquiry - Transportation
+
+9.  Parks and Recreation Maintenance
+
+10. Overgrown Vegetation
+
+Over the quarters, there seems to be an increase in request types from quarter 1 to quarter 3, before decreasing in quarter 4. A lot of the service types like Unauthorized Encampment, Illegal Dumping/Needles, Graffiti and General Inquiry - Transportation have the highest amount of requests in quarter 3. For Pothole, there is a significant decline from quarter 1 to quarter 2 and quarter 2 to quarter 3, before it increases again in quarter 4. For Overgrown Vegetation, quarter 1 and 4 have noticeable lower number of requests compared to quarter 2 and 3. For the others, there are small decrease and increase of requests in between the quarters. Overall, the service type with the biggest amount of requests is Abandoned Vehicle/72-hr Parking Ordinance for every quarter.
