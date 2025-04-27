@@ -1,0 +1,82 @@
+---
+title: "Datathon Final Submission"
+author: "Suk Jin Chung, Maisara Mackeen"
+format: 
+  html:
+    embed-resources: true
+editor: visual
+runtime: shiny
+---
+
+# Data Visualization
+
+## Part 1: Visualizing Customer Requests Over Time
+
+```{r}
+#| echo: false
+library(ggplot2)
+library(dplyr)
+library(shiny)
+library(readr)
+library(scales)
+
+cleaned_df <- read_csv("Cleaned_Customer_Service.csv", show_col_types = FALSE)
+```
+
+```{}
+```
+
+```{}
+```
+
+## Part 2: Department with the Highest Number of Service Requests
+
+```{}
+```
+
+## Part 3: Total Request by Different Service Types
+
+This section calculates the total requests that each service types obtained by the City of Seattle from the beginning of 2021 to 2025.
+
+```{r}
+#| echo: false
+#| output: true
+
+# Count instances of each service type requests by quarter
+qtrly_request_counts <- dplyr::count(cleaned_df, Service.Request.Type, Quarter, sort = TRUE)
+
+# Get plot of the instances per quarter
+qtrly_req_ct_ggplot <- ggplot(data = qtrly_request_counts, aes(x = Service.Request.Type, y = n, fill = Quarter)) + 
+  geom_bar(stat = "identity") +
+  labs(
+    title = "Quarterly Count of Service Request Types",
+    x = "Service Request Types", 
+    y = "Count of Service Request Types", color = "Quarter"
+    ) + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+```{r}
+#| echo: false
+# GET TOP 10 FOR BETTER ANALYSIS
+
+# Count instances of each service type, then sort and get the highest 10 service types
+top_10_service_ct <- dplyr::count(cleaned_df, Service.Request.Type, sort = TRUE) %>%
+  dplyr::slice_max(n, n = 10)
+
+# Filter to the top 10 service types, then count instances of service type per quarter
+top_10_qtrly_req_ct <- cleaned_df %>%
+  dplyr::filter(Service.Request.Type %in% top_10_service_ct$Service.Request.Type) %>%
+  dplyr::count(Service.Request.Type, Quarter)
+
+# Plot in descending order
+top_10_req_ct_ggplot <- ggplot(data = top_10_qtrly_req_ct, aes(x = reorder(Service.Request.Type, -n), y = n, fill = Quarter)) +  
+  geom_bar(stat = "identity") +
+  labs(
+    title = "Count of Top 10 Service Request Types per Quarter",
+    x = "Service Request Types", 
+    y = "Count of Service Request Types", 
+    color = "Quarter") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
